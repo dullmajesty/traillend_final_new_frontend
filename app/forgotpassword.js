@@ -16,7 +16,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 
-const BASE_URL = "http://10.178.207.115:8000";
+const BASE_URL = "http://192.168.1.8:8000";
 
 export default function ForgotPassword() {
   const router = useRouter();
@@ -46,7 +46,7 @@ export default function ForgotPassword() {
       formData.append("send_code", "true");
       formData.append("email", email);
 
-      await axios.post(`${BASE_URL}/forgot-password/`, formData, {
+      await axios.post(`${BASE_URL}/forgot_password/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -86,7 +86,7 @@ export default function ForgotPassword() {
       formData.append("verify_code", "true");
       formData.append("reset_code", code);
 
-      const res = await axios.post(`${BASE_URL}/forgot-password/`, formData, {
+      const res = await axios.post(`${BASE_URL}/forgot_password/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });
@@ -118,7 +118,7 @@ export default function ForgotPassword() {
       const formData = new FormData();
       formData.append("resend_code", "true");
 
-      await axios.post(`${BASE_URL}/forgot-password/`, formData, {
+      await axios.post(`${BASE_URL}/forgot_password/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });

@@ -15,7 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import Toast from "react-native-toast-message";
 
-const BASE_URL = "http://10.178.207.115:8000";
+const BASE_URL = "http://192.168.1.8:8000";
 
 export default function EditProfile() {
   const [image, setImage] = useState(null);

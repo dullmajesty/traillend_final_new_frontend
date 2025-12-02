@@ -19,7 +19,7 @@ import { setAuth } from "../lib/authStorage";
 import { LinearGradient } from "expo-linear-gradient";
 import Toast from "react-native-toast-message";
 
-const BASE_URL = "http://10.178.207.115:8000";
+const BASE_URL = "http://192.168.1.8:8000";
 
 export default function Login() {
   const router = useRouter();

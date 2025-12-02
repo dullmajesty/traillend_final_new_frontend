@@ -15,7 +15,7 @@ import { useRouter } from "expo-router";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 
-const BASE_URL = "http://10.178.207.115:8000";
+const BASE_URL = "http://192.168.1.8:8000";
 
 export default function ViewProfile() {
   const router = useRouter();

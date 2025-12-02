@@ -43,7 +43,7 @@ export default function ReservationStatus() {
         return;
       }
 
-      const res = await fetch("http://10.178.207.115:8000/api/user_reservations/", {
+      const res = await fetch("http://192.168.1.8:8000/api/user_reservations/", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -67,7 +67,7 @@ export default function ReservationStatus() {
           try {
             const token = await AsyncStorage.getItem("accessToken");
             const res = await fetch(
-              `http://10.178.207.115:8000/api/reservations/${id}/cancel/`,
+              `http://192.168.1.8:8000/api/reservations/${id}/cancel/`,
               {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },

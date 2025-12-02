@@ -8,7 +8,7 @@ export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [accessToken, setAccessToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
-  const API_URL = "http://10.178.207.115:8000"; //  your backend IP
+  const API_URL = "http://192.168.1.8:8000"; //  your backend IP
 
   // Load both tokens from storage
   useEffect(() => {

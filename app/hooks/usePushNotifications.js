@@ -4,7 +4,7 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_URL = "http://10.178.207.115:8000"; // Update if needed
+const API_URL = "http://192.168.1.8:8000"; // Update if needed
 
 // Notification behavior config
 Notifications.setNotificationHandler({
