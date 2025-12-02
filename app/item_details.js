@@ -55,12 +55,6 @@ export default function ItemDetails() {
     fetchItem();
   }, [id]);
 
-  const [range, setRange] = useState({
-  start: null,
-  end: null,
-});
-
-
   const fetchAvailabilityMap = async () => {
     try {
       setCalendarLoading(true);
