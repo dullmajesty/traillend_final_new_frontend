@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import Toast from "react-native-toast-message";
 import usePushNotifications from "./hooks/usePushNotifications";
 import { useEffect } from "react";
+import { toastConfig } from "../component/toastConfig";
 
 export default function RootLayout() {
   const { expoPushToken } = usePushNotifications(); // 🔥 register + listeners
@@ -17,7 +18,11 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }} />
 
       {/* Global Toast for notifications */}
-      <Toast position="top" topOffset={100} visibilityTime={5000} />
+      <Toast 
+        config={toastConfig}
+        position="top" 
+        topOffset={80} 
+        visibilityTime={4000} />
     </>
   );
 }

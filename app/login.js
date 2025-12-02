@@ -185,35 +185,46 @@ export default function Login() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Log In to Your Account</Text>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Username"
-              placeholderTextColor="#999"
-              value={username}
-              onChangeText={setUsername}
-            />
-
-            <View style={styles.passwordWrapper}>
+            {/* Username */}
+            <View style={{ marginBottom: 15 }}>
+              <Text style={styles.inputLabel}>Username</Text>
               <TextInput
-                style={styles.inputPassword}
-                placeholder="Password"
+                style={styles.input}
+                placeholder="Enter your username"
                 placeholderTextColor="#999"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
+                value={username}
+                onChangeText={setUsername}
               />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Ionicons
-                  name={showPassword ? "eye-off" : "eye"}
-                  size={22}
-                  color="#1976D2"
-                />
-              </TouchableOpacity>
             </View>
 
+            {/* Password */}
+            <View style={{ marginBottom: 15 }}>
+              <Text style={styles.inputLabel}>Password</Text>
+
+              <View style={styles.passwordWrapper}>
+                <TextInput
+                  style={styles.inputPassword}
+                  placeholder="Enter your password"
+                  placeholderTextColor="#999"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off" : "eye"}
+                    size={22}
+                    color="#1976D2"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Row: Remember Me + Forgot Password */}
             <View style={styles.row}>
               <View style={styles.rememberMe}>
                 <Switch
@@ -221,15 +232,15 @@ export default function Login() {
                   onValueChange={setRememberMe}
                   thumbColor={rememberMe ? "#1976D2" : "#ccc"}
                 />
-                <Text style={{ marginLeft: 8, color: "#333" }}>
-                  Remember Me
-                </Text>
+                <Text style={{ marginLeft: 8, color: "#333" }}>Remember Me</Text>
               </View>
+
               <TouchableOpacity onPress={() => router.push("/forgotpassword")}>
                 <Text style={styles.forgotPassword}>Forgot Password?</Text>
               </TouchableOpacity>
             </View>
 
+            {/* Login Button */}
             <TouchableOpacity activeOpacity={0.9} onPress={handleLogin}>
               <LinearGradient
                 colors={["#64B5F6", "#1976D2"]}
@@ -242,10 +253,9 @@ export default function Login() {
               </LinearGradient>
             </TouchableOpacity>
 
+            {/* Signup Link */}
             <View style={styles.signup}>
-              <Text style={{ color: "#333" }}>
-                Don't have an account?{" "}
-              </Text>
+              <Text style={{ color: "#333" }}>Don't have an account? </Text>
               <TouchableOpacity onPress={() => router.push("/signup")}>
                 <Text style={styles.signupText}>Create Account</Text>
               </TouchableOpacity>
@@ -269,7 +279,10 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  gradient: { flex: 1 },
+  gradient: { 
+    flex: 1 
+  },
+
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "center",
@@ -277,39 +290,71 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingVertical: 40,
   },
-  logoContainer: { alignItems: "center", marginBottom: 30 },
-  title: { fontSize: 42, fontWeight: "bold", color: "#fff" },
+
+  logoContainer: { 
+    alignItems: "center", 
+    marginBottom: 30 
+  },
+
+  title: { 
+    fontSize: 42, 
+    fontWeight: "bold", 
+    color: "#fff" 
+  },
+
   subtitle: {
     fontSize: 14,
     color: "rgba(255,255,255,0.9)",
     marginTop: 4,
     textAlign: "center",
   },
+
   card: {
     backgroundColor: "rgba(255,255,255,0.95)",
     borderRadius: 20,
     width: "100%",
-    padding: 20,
+    padding: 22,
     elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
   },
+
   cardTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
     color: "#1976D2",
-    marginBottom: 20,
+    marginBottom: 25,
     textAlign: "center",
   },
+
+  /* ⭐ LABELS */
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 6,
+    marginLeft: 2,
+  },
+
+  /* ⭐ USERNAME INPUT */
   input: {
     width: "100%",
     height: 50,
     backgroundColor: "#F1F5F9",
     borderRadius: 10,
     paddingHorizontal: 15,
-    marginBottom: 15,
     fontSize: 15,
     color: "#333",
   },
-  passwordWrapper: { position: "relative", marginBottom: 15 },
+
+  /* ⭐ PASSWORD INPUT */
+  passwordWrapper: { 
+    position: "relative", 
+    marginBottom: 15 
+  },
+
   inputPassword: {
     width: "100%",
     height: 50,
@@ -320,19 +365,33 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#333",
   },
-  eyeIcon: { position: "absolute", right: 15, top: 13 },
+
+  eyeIcon: { 
+    position: "absolute", 
+    right: 15, 
+    top: 13 
+  },
+
+  /* Row: Remember me + Forgot Password */
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 5,
     marginBottom: 20,
   },
-  rememberMe: { flexDirection: "row", alignItems: "center" },
+
+  rememberMe: { 
+    flexDirection: "row", 
+    alignItems: "center" 
+  },
+
   forgotPassword: {
     color: "#1976D2",
     fontWeight: "600",
     textDecorationLine: "underline",
   },
+
   loginButton: {
     flexDirection: "row",
     justifyContent: "center",
@@ -341,16 +400,36 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginBottom: 20,
   },
+
   buttonText: {
     color: "#fff",
     fontWeight: "700",
     fontSize: 16,
     marginLeft: 8,
   },
-  signup: { flexDirection: "row", justifyContent: "center" },
-  signupText: { color: "#1976D2", fontWeight: "700" },
-  illustrationContainer: { alignItems: "center", marginTop: 30 },
-  illustration: { width: 220, height: 120, opacity: 0.9 },
+
+  signup: { 
+    flexDirection: "row", 
+    justifyContent: "center",
+    marginBottom: 5 
+  },
+
+  signupText: { 
+    color: "#1976D2", 
+    fontWeight: "700" 
+  },
+
+  illustrationContainer: { 
+    alignItems: "center", 
+    marginTop: 20 
+  },
+
+  illustration: { 
+    width: 220, 
+    height: 120, 
+    opacity: 0.9 
+  },
+
   communityText: {
     color: "rgba(255,255,255,0.9)",
     fontSize: 13,
