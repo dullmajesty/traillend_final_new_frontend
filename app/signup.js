@@ -70,107 +70,208 @@ export default function SignUp() {
   const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
   const isValidContact = (num) => /^09\d{9}$/.test(num);
 
-  const handleSignUp = async () => {
-    if (!name || !username || !email || !contactNumber || !address || !password || !confirmPassword) {
+ const handleSignUp = async () => {
+
+  // --- REQUIRED FIELD CHECKS ---
+  if (!name.trim()) {
+    return Toast.show({
+      type: "error",
+      text1: "Full Name Required",
+      text2: "Please enter your full name.",
+    });
+  }
+
+  if (!username.trim()) {
+    return Toast.show({
+      type: "error",
+      text1: "Username Required",
+      text2: "Please enter a username.",
+    });
+  }
+
+  if (!email.trim()) {
+    return Toast.show({
+      type: "error",
+      text1: "Email Required",
+      text2: "Please enter your email.",
+    });
+  }
+
+  if (!contactNumber.trim()) {
+    return Toast.show({
+      type: "error",
+      text1: "Contact Number Required",
+      text2: "Please enter your phone number.",
+    });
+  }
+
+  if (!address.trim()) {
+    return Toast.show({
+      type: "error",
+      text1: "Address Required",
+      text2: "Please enter your address.",
+    });
+  }
+
+  if (!password.trim()) {
+    return Toast.show({
+      type: "error",
+      text1: "Password Required",
+      text2: "Please enter a password.",
+    });
+  }
+
+  if (!confirmPassword.trim()) {
+    return Toast.show({
+      type: "error",
+      text1: "Confirm Password",
+      text2: "Please re-enter your password.",
+    });
+  }
+
+  // --- FORMAT CHECKS ---
+  if (!isValidEmail(email)) {
+    return Toast.show({
+      type: "error",
+      text1: "Invalid Email",
+      text2: "Please enter a valid email address.",
+    });
+  }
+
+  if (!isValidContact(contactNumber)) {
+    return Toast.show({
+      type: "error",
+      text1: "Invalid Phone Number",
+      text2: "Your number must start with 09 and have 11 digits.",
+    });
+  }
+
+  // --- PASSWORD MATCH ---
+  if (password !== confirmPassword) {
+    return Toast.show({
+      type: "error",
+      text1: "Passwords Don't Match",
+      text2: "Make sure both passwords match.",
+    });
+  }
+
+  // --- PASSWORD STRENGTH ---
+  if (!isStrongPassword(password)) {
+    return Toast.show({
+      type: "error",
+      text1: "Weak Password",
+      text2: "Use 8+ characters with upper/lowercase, a number, and a symbol.",
+    });
+  }
+
+
+  // --- API REQUEST ---
+  try {
+    setLoading(true);
+
+    const response = await axios.post(
+      `${BASE_URL}/api/register/`,
+      {
+        name,
+        username,
+        email,
+        contactNumber,
+        address,
+        password,
+        confirmPassword,
+      },
+      { headers: { "Content-Type": "application/json" }, timeout: 8000 }
+    );
+
+    const res = response.data;
+
+    // --- SUCCESS ---
+    if (res?.success === true) {
       Toast.show({
-        type: "error",
-        text1: "Missing Fields",
-        text2: "Please fill out all required fields.",
+        type: "success",
+        text1: "Account Created!",
+        text2: "Check your email to verify your account.",
       });
+
+      setTimeout(() => router.replace("/login"), 1500);
       return;
     }
 
-    if (!isValidEmail(email)) {
-      Toast.show({
+    // --- SPECIFIC SERVER ERRORS ---
+    if (res?.message?.toLowerCase().includes("username")) {
+      return Toast.show({
         type: "error",
-        text1: "Invalid Email",
-        text2: "Please enter a valid email address.",
+        text1: "Username Taken",
+        text2: "Please choose another username.",
       });
-      return;
     }
 
-    if (!isValidContact(contactNumber)) {
-      Toast.show({
+    if (res?.message?.toLowerCase().includes("email")) {
+      return Toast.show({
         type: "error",
-        text1: "Invalid Contact Number",
-        text2: "Enter an 11-digit number starting with 09.",
+        text1: "Email Already Registered",
+        text2: "Use another email or try logging in.",
       });
-      return;
     }
 
-    if (password !== confirmPassword) {
-      Toast.show({
-        type: "error",
-        text1: "Password Mismatch",
-        text2: "Your passwords do not match.",
-      });
-      return;
-    }
+    // --- GENERAL SERVER MESSAGE ---
+    return Toast.show({
+      type: "error",
+      text1: "Signup Failed",
+      text2: res?.message || "Something went wrong.",
+    });
 
-    if (!isStrongPassword(password)) {
-      Toast.show({
-        type: "error",
-        text1: "Weak Password",
-        text2:
-          "Use at least 8 characters with uppercase, lowercase, number, and symbol.",
-      });
-      return;
-    }
+  } catch (err) {
+    console.log("Signup error:", err.response?.data || err.message);
 
-    try {
-      setLoading(true);
+    // 🔥 Backend responded but with an error
+    if (err.response) {
+      const message = err.response.data?.message?.toLowerCase() || "";
 
-      const response = await axios.post(
-        `${BASE_URL}/api/register/`,
-        {
-          name,
-          username,
-          email,
-          contactNumber,
-          address,
-          password,
-          confirmPassword,
-        },
-        { headers: { "Content-Type": "application/json" }, timeout: 8000 }
-      );
-
-      if (response.data?.success === true) {
-        Toast.show({
-          type: "success",
-          text1: "Registration Successful",
-          text2: "Please check your email to verify your account.",
-        });
-        setTimeout(() => router.replace("/login"), 1500);
-      } else if (response.data?.message?.includes("username")) {
-        Toast.show({
-          type: "error",
-          text1: "Username Taken",
-          text2: "Please choose a different username.",
-        });
-      } else if (response.data?.message?.includes("email")) {
-        Toast.show({
+      if (message.includes("email")) {
+        return Toast.show({
           type: "error",
           text1: "Email Already Registered",
-          text2: "Try logging in instead.",
-        });
-      } else {
-        Toast.show({
-          type: "error",
-          text1: "Registration Failed",
-          text2: response.data?.message || "Please try again.",
+          text2: "Try another email or log in instead.",
         });
       }
-    } catch (err) {
-      console.error("Signup error:", err.response?.data || err.message);
-      Toast.show({
+
+      if (message.includes("username")) {
+        return Toast.show({
+          type: "error",
+          text1: "Username Already Taken",
+          text2: "Choose a different username.",
+        });
+      }
+
+      if (message.includes("password")) {
+        return Toast.show({
+          type: "error",
+          text1: "Password Error",
+          text2: "Please double-check your password.",
+        });
+      }
+
+      return Toast.show({
         type: "error",
-        text1: "Network Error",
-        text2: "Unable to connect to server. Please try again.",
+        text1: "Signup Failed",
+        text2: err.response.data.message || "Please try again.",
       });
-    } finally {
-      setLoading(false);
     }
-  };
+
+    // ❌ FULL NETWORK FAILURE
+    return Toast.show({
+      type: "error",
+      text1: "Connection Error",
+      text2: "Server unreachable. Check your internet.",
+    });
+
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
 
   return (
@@ -266,79 +367,94 @@ export default function SignUp() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Create Your Account</Text>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name"
-              value={name}
-              onChangeText={setName}
-              placeholderTextColor="#999"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Username"
-              value={username}
-              onChangeText={setUsername}
-              placeholderTextColor="#999"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholderTextColor="#999"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Contact Number"
-              value={contactNumber}
-              onChangeText={setContactNumber}
-              keyboardType="phone-pad"
-              placeholderTextColor="#999"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Address / Purok / Street"
-              value={address}
-              onChangeText={setAddress}
-              placeholderTextColor="#999"
-            />
+            {/* FULL NAME */}
+            <View style={{ marginBottom: 15 }}>
+              <Text style={styles.inputLabel}>Full Name</Text>
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                placeholder="Enter full name"
+                placeholderTextColor="#999"
+              />
+            </View>
 
-            {/* PASSWORD FIELD */}
+            {/* USERNAME */}
+            <View style={{ marginBottom: 15 }}>
+              <Text style={styles.inputLabel}>Username</Text>
+              <TextInput
+                style={styles.input}
+                value={username}
+                onChangeText={setUsername}
+                placeholder="Enter username"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            {/* EMAIL */}
+            <View style={{ marginBottom: 15 }}>
+              <Text style={styles.inputLabel}>Email Address</Text>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="example@gmail.com"
+                placeholderTextColor="#999"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            {/* CONTACT NUMBER */}
+            <View style={{ marginBottom: 15 }}>
+              <Text style={styles.inputLabel}>Contact Number</Text>
+              <TextInput
+                style={styles.input}
+                value={contactNumber}
+                onChangeText={setContactNumber}
+                placeholder="09xxxxxxxxx"
+                placeholderTextColor="#999"
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            {/* ADDRESS */}
+            <View style={{ marginBottom: 15 }}>
+              <Text style={styles.inputLabel}>Address / Purok / Street</Text>
+              <TextInput
+                style={styles.input}
+                value={address}
+                onChangeText={setAddress}
+                placeholder="Enter your address"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            {/* PASSWORD */}
             <View
               style={styles.passwordWrapper}
               onLayout={(e) => {
                 const { y, height } = e.nativeEvent.layout;
-                setPasswordY(y + height + 5); // correct offset
+                setPasswordY(y + height + 5);
               }}
             >
-          <TextInput
-            style={styles.inputPassword}
-            placeholder="Password"
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text);
+              <Text style={styles.inputLabel}>Password</Text>
 
-              // 🔥 Auto-hide popup when password becomes strong
-              if (isStrongPassword(text)) {
-                setShowPasswordRules(false);
-              }
-            }}
-            secureTextEntry={!showPassword}
-            placeholderTextColor="#999"
-            onFocus={() => setShowPasswordRules(true)}
-          />
+              <TextInput
+                style={styles.inputPassword}
+                placeholder="Enter password"
+                value={password}
+                placeholderTextColor="#999"
+                secureTextEntry={!showPassword}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (isStrongPassword(text)) setShowPasswordRules(false);
+                }}
+                onFocus={() => setShowPasswordRules(true)}
+              />
 
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Ionicons
-                  name={showPassword ? "eye-off" : "eye"}
-                  size={22}
-                  color="#1976D2"
-                />
+              <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color="#1976D2" />
               </TouchableOpacity>
             </View>
 
@@ -380,25 +496,21 @@ export default function SignUp() {
                   </View>
                 </TouchableOpacity>
               )}
-            {/* Confirm Password */}
+            {/* CONFIRM PASSWORD */}
             <View style={styles.passwordWrapper}>
+              <Text style={styles.inputLabel}>Confirm Password</Text>
+
               <TextInput
                 style={styles.inputPassword}
-                placeholder="Confirm Password"
+                placeholder="Re-enter password"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirm}
                 placeholderTextColor="#999"
               />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowConfirm(!showConfirm)}
-              >
-                <Ionicons
-                  name={showConfirm ? "eye-off" : "eye"}
-                  size={22}
-                  color="#1976D2"
-                />
+
+              <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowConfirm(!showConfirm)}>
+                <Ionicons name={showConfirm ? "eye-off" : "eye"} size={22} color="#1976D2" />
               </TouchableOpacity>
             </View>
 
@@ -449,6 +561,7 @@ export default function SignUp() {
 
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
+
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "center",
@@ -456,100 +569,167 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingVertical: 40,
   },
-  headerContainer: { alignItems: "center", marginBottom: 30 },
-  title: { fontSize: 42, fontWeight: "bold", color: "#fff" },
+
+  headerContainer: { 
+    alignItems: "center", 
+    marginBottom: 30 
+  },
+
+  title: { 
+    fontSize: 42, 
+    fontWeight: "bold", 
+    color: "#fff" 
+  },
+
   subtitle: {
     fontSize: 14,
     color: "rgba(255,255,255,0.9)",
     marginTop: 4,
     textAlign: "center",
   },
+
   card: {
-    backgroundColor: "rgba(255,255,255,0.95)",
+    backgroundColor: "rgba(255,255,255,0.97)",
     borderRadius: 20,
     width: "100%",
-    padding: 20,
+    padding: 22,
     elevation: 5,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 6,
   },
+
   cardTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
     color: "#1976D2",
-    marginBottom: 20,
+    marginBottom: 22,
     textAlign: "center",
   },
+
+  /* -------- LABEL -------- */
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 6,
+    marginLeft: 2,
+  },
+
+  /* -------- NORMAL INPUT -------- */
   input: {
     width: "100%",
-    height: 50,
+    height: 52,
     backgroundColor: "#F1F5F9",
     borderRadius: 10,
-    paddingHorizontal: 15,
-    marginBottom: 15,
+    paddingHorizontal: 18,
+    marginBottom: 0,
     fontSize: 15,
     color: "#333",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
   },
-  passwordWrapper: { position: "relative", marginBottom: 15 },
+
+  /* -------- PASSWORD FIELD -------- */
+  passwordWrapper: { 
+    position: "relative", 
+    marginBottom: 18 
+  },
+
   inputPassword: {
     width: "100%",
-    height: 50,
+    height: 52,
     backgroundColor: "#F1F5F9",
     borderRadius: 10,
-    paddingHorizontal: 15,
-    paddingRight: 40,
+    paddingHorizontal: 18,
+    paddingRight: 45,
     fontSize: 15,
     color: "#333",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
   },
-  eyeIcon: { position: "absolute", right: 15, top: 13 },
+
+  eyeIcon: { 
+    position: "absolute", 
+    right: 15, 
+    top: 38, 
+  },
+
+  /* -------- BUTTON -------- */
   button: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
     paddingVertical: 14,
+    marginTop: 10,
     marginBottom: 20,
   },
-  buttonText: { color: "#fff", fontWeight: "700", fontSize: 16, marginLeft: 8 },
-  loginRow: { flexDirection: "row", justifyContent: "center" },
-  loginText: { color: "#1976D2", fontWeight: "700" },
-  illustrationContainer: { alignItems: "center", marginTop: 10 },
-  illustration: { width: 220, height: 60, opacity: 0.9 },
+
+  buttonText: { 
+    color: "#fff", 
+    fontWeight: "700", 
+    fontSize: 16, 
+    marginLeft: 8 
+  },
+
+  /* -------- LOGIN ROW -------- */
+  loginRow: { 
+    flexDirection: "row", 
+    justifyContent: "center" 
+  },
+
+  loginText: { 
+    color: "#1976D2", 
+    fontWeight: "700" 
+  },
+
+  /* -------- FOOTER / IMAGE -------- */
+  illustrationContainer: { 
+    alignItems: "center", 
+    marginTop: 12 
+  },
+
+  illustration: { 
+    width: 220, 
+    height: 60, 
+    opacity: 0.9 
+  },
+
   communityText: {
     color: "rgba(255,255,255,0.9)",
     fontSize: 13,
     marginTop: 6,
     textAlign: "center",
   },
-rulesOverlay: {
-  position: "absolute",
-  left: 20,
-  right: 20,
-  backgroundColor: "transparent",
-  zIndex: 999,
-  // remove top here because dynamic top is added in JSX
-},
 
-rulesBox: {
-  backgroundColor: "#fff",
-  padding: 15,
-  borderRadius: 12,
-  borderWidth: 1,
-  borderColor: "#ddd",
-  elevation: 6,
-  shadowColor: "#000",
-  shadowOpacity: 0.15,
-  shadowOffset: { width: 0, height: 3 },
-  shadowRadius: 6,
-},
+  /* -------- PASSWORD RULES POPUP -------- */
+  rulesOverlay: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    backgroundColor: "transparent",
+    zIndex: 999,
+  },
 
-rulesTitle: {
-  fontWeight: "700",
-  fontSize: 14,
-  marginBottom: 8,
-},
+  rulesBox: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+  },
 
+  rulesTitle: {
+    fontWeight: "700",
+    fontSize: 14,
+    marginBottom: 8,
+  },
 });
 
