@@ -17,7 +17,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }} />
 
       {/* Global Toast for notifications */}
-      <Toast position="top" topOffset={60} visibilityTime={3000} />
+      <Toast position="top" topOffset={60} visibilityTime={10000} />
     </>
   );
 }
