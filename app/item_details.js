@@ -255,56 +255,7 @@ const updateMarkedDates = (start, end) => {
   };
 
 
-  const pickImage = async (setImage) => {
-    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permissionResult.granted) {
-      Toast.show({
-        type: "error",
-        text1: "Permission Denied",
-        text2: "Please allow gallery access to upload a photo.",
-      });
-      return;
-    }
-
-    Alert.alert("Upload Photo", "Choose an option", [
-      {
-        text: "Take Photo",
-        onPress: async () => {
-          const result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-
-            allowsEditing: true,
-            quality: 0.7,
-          });
-          if (!result.canceled) setImage(result.assets[0].uri);
-           Toast.show({
-            type: "success",
-            text1: "Photo Added",
-            text2: "Your photo was captured successfully.",
-          });
-        },
-      },
-      {
-        text: "Choose from Gallery",
-        onPress: async () => {
-          const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-
-            allowsEditing: true,
-            quality: 0.7,
-          });
-          if (!result.canceled) setImage(result.assets[0].uri);
-          Toast.show({
-            type: "success",
-            text1: "Photo Added",
-            text2: "Your photo has been selected.",
-          });
-        },
-      },
-      { text: "Cancel", style: "cancel" },
-    ]);
-  };
-
+  
 
 const preflightAndGoToSummary = async () => {
   if (!borrowDate || !returnDate) {
@@ -500,43 +451,6 @@ return (
       <View style={styles.qtyDisplay}>
         <Text style={styles.qtyText}>Borrow Qty: {borrowQty || "—"}</Text>
       </View>
-
-      {/* UPLOAD REQUEST LETTER */}
-      <TouchableOpacity
-        style={styles.uploadCard}
-        onPress={() => pickImage(setLetterPhoto)}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="document-text-outline" size={26} color="#1976D2" />
-        <View style={{ marginLeft: 10 }}>
-          <Text style={styles.uploadTitle}>Upload Request Letter</Text>
-          <Text style={styles.uploadHint}>
-            Please upload a short request letter explaining why you need the item.
-          </Text>
-        </View>
-      </TouchableOpacity>
-
-      {letterPhoto && <Image source={{ uri: letterPhoto }} style={styles.preview} />}
-
-      {/* UPLOAD VALID ID */}
-      <TouchableOpacity
-        style={styles.uploadCard}
-        onPress={() => pickImage(setIdPhoto)}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="id-card-outline" size={26} color="#1976D2" />
-        <View style={{ marginLeft: 10 }}>
-          <Text style={styles.uploadTitle}>Upload Valid ID</Text>
-          <Text style={styles.uploadHint}>
-            Accepted IDs:{" "}
-            <Text style={styles.uploadEmphasis}>
-              Government-issued, Student ID, or Birth Certificate
-            </Text>.
-          </Text>
-        </View>
-      </TouchableOpacity>
-
-      {idPhoto && <Image source={{ uri: idPhoto }} style={styles.preview} />}
 
       {/* REASON FOR BORROWING */}
       <Text style={styles.label}>Reason for Borrowing:</Text>
@@ -740,23 +654,6 @@ return (
         style={styles.reserveBtn}
         disabled={checking}
         onPress={() => {
-          if (!letterPhoto) {
-            Toast.show({
-              type: "error",
-              text1: "Request Letter Required",
-              text2: "Please upload your Request letter.",
-            });
-            return;
-          }
-
-          if (!idPhoto) {
-            Toast.show({
-              type: "error",
-              text1: "Valid ID Required",
-              text2: "Please upload your valid ID.",
-            });
-            return;
-          }
           // Check availability for entire range
           const insufficient = checkRangeQty();
 
@@ -770,10 +667,6 @@ return (
             Alert.alert("Insufficient Availability", msg);
             return;
           }
-
-        
-
-
           setShowProceedModal(true);
         }}
       >
@@ -1193,17 +1086,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
 
-  uploadTitle: { fontSize: 14, fontWeight: "700", color: "#1976D2", marginBottom: 2 },
-  uploadHint: { fontSize: 12, color: "#555", fontStyle: "italic", lineHeight: 16 },
-  uploadEmphasis: { color: "#E65100", fontWeight: "600" },
 
-  preview: {
-    width: "100%",
-    height: 180,
-    borderRadius: 12,
-    marginBottom: 10,
-    marginTop: -2,
-  },
 
   label: { color: "#fff", fontWeight: "600", marginBottom: 6 },
 
