@@ -42,7 +42,7 @@ export default function ItemDetails() {
   useEffect(() => {
     const fetchItem = async () => {
       try {
-        const res = await fetch("http://192.168.1.8:8000/api/inventory_list/");
+        const res = await fetch("http://192.168.43.118:8000/api/inventory_list/");
         const data = await res.json();
         const found = data.find((i) => i.item_id === parseInt(id));
         setItem(found);
@@ -59,7 +59,7 @@ export default function ItemDetails() {
     try {
       setCalendarLoading(true);
 
-      const res = await fetch(`http://192.168.1.8:8000/api/items/${id}/availability-map/`);
+      const res = await fetch(`http://192.168.43.118:8000/api/items/${id}/availability-map/`);
       const json = await res.json();
 
       const map = json.calendar || {};
@@ -95,6 +95,116 @@ export default function ItemDetails() {
       setCalendarLoading(false);
     }
   };
+  const handleDayPress = async ({ dateString }) => {
+  const info = calendarMap[dateString];
+
+  if (info?.status === "fully_reserved") {
+    Alert.alert("Unavailable", "This date is fully reserved.");
+    return;
+  }
+
+  // 👉 Update availableQty here
+  if (info && info.available_qty !== undefined) {
+    setAvailableQty(info.available_qty);
+  } else {
+    const result = await fetchAvailability(dateString);
+    if (result?.available_qty !== undefined) {
+      setAvailableQty(result.available_qty);
+    }
+  }
+
+  // If selecting a new start date OR resetting
+  if (!borrowDate || (borrowDate && returnDate)) {
+    setBorrowDate(dateString);
+    setReturnDate(null);
+    updateMarkedDates(dateString, null);
+    return;
+  }
+
+  // Selecting return date
+  if (borrowDate && !returnDate) {
+    if (dateString < borrowDate) {
+      Alert.alert("Invalid Range", "Return date must be after borrow date.");
+      return;
+    }
+
+    setReturnDate(dateString);
+    updateMarkedDates(borrowDate, dateString);
+  }
+};
+
+const checkRangeQty = () => {
+  if (!borrowDate || !returnDate || !borrowQty) return [];
+
+  const needed = parseInt(borrowQty);
+  let insufficientDates = [];
+
+  let d = new Date(borrowDate);
+  let end = new Date(returnDate);
+
+  while (d <= end) {
+    const ds = d.toISOString().slice(0, 10);
+    const info = calendarMap[ds];
+    const available = info?.available_qty ?? 0;
+
+    if (available < needed) {
+      insufficientDates.push({ date: ds, available });
+    }
+
+    d.setDate(d.getDate() + 1);
+  }
+
+  return insufficientDates;
+};
+
+
+
+const updateMarkedDates = (start, end) => {
+  const newMarks = {};
+
+  Object.entries(calendarMap).forEach(([date, info]) => {
+    const isReserved = info?.status === "fully_reserved";
+    const available = info?.available_qty;
+
+    newMarks[date] = {
+      customStyles: {
+        container: {
+          backgroundColor: isReserved ? "#ffcccc" : "#e6ffe6",
+        },
+        text: {
+          color: isReserved ? "#a00" : "#008000",
+        },
+        qty: available,
+      },
+    };
+  });
+
+  // Mark start
+  if (start) {
+    newMarks[start].selected = true;
+  }
+
+  // Mark range
+  if (start && end) {
+    let d = new Date(start);
+    const endDate = new Date(end);
+
+    while (d <= endDate) {
+      const ds = d.toISOString().slice(0, 10);
+
+      newMarks[ds] = {
+        ...newMarks[ds],
+        inRange: ds !== start && ds !== end,
+        selected: ds === start || ds === end,
+      };
+
+      d.setDate(d.getDate() + 1);
+    }
+  }
+
+  setMarkedDates(newMarks);
+};
+
 
 
 
@@ -105,7 +215,7 @@ export default function ItemDetails() {
   const fetchAvailability = async (date) => {
     try {
       const res = await fetch(
-        `http://192.168.1.8:8000/api/items/${id}/availability/?date=${date}`
+        `http://192.168.43.118:8000/api/items/${id}/availability/?date=${date}`
       );
       if (!res.ok) return null;
       const data = await res.json();
@@ -119,12 +229,31 @@ export default function ItemDetails() {
   };
 
   const handleSaveDate = () => {
-    if (!availableQty && availableQty !== 0) return Alert.alert("Select a date first.");
-    if (!borrowQty) return Alert.alert("Enter quantity to borrow.");
-    if (parseInt(borrowQty) > availableQty)
-      return Alert.alert("Quantity exceeds available items.");
+    if (!borrowDate)
+      return Alert.alert("Missing Date", "Please select a borrow date first.");
+
+    if (!returnDate)
+      return Alert.alert("Missing Date", "Please select a return date.");
+
+    if (!borrowQty)
+      return Alert.alert("Missing Quantity", "Enter the quantity to borrow.");
+
+    const insufficient = checkRangeQty();
+
+    if (insufficient.length > 0) {
+      let msg = "Your requested quantity is not available on:\n\n";
+
+      insufficient.forEach(item => {
+        msg += `${item.date}: Only ${item.available} left\n`;
+      });
+
+      Alert.alert("Insufficient Availability", msg);
+      return;
+    }
+
     setShowCalendarModal(false);
   };
+
 
   const pickImage = async (setImage) => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -198,7 +327,7 @@ const preflightAndGoToSummary = async () => {
 
   setChecking(true);
   try {
-    const res = await fetch("http://192.168.1.8:8000/api/reservations/check/", {
+    const res = await fetch("http://192.168.43.118:8000/api/reservations/check/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -278,7 +407,7 @@ const fetchSuggestedItems = async () => {
   try {
     setLoadingSuggestions(true);
 
-    const res = await fetch("http://192.168.1.8:8000/api/suggest-items/", {
+    const res = await fetch("http://192.168.43.118:8000/api/suggest-items/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -335,25 +464,33 @@ return (
     <ScrollView contentContainerStyle={{ paddingBottom: 45, paddingHorizontal: 20,  }}>
 
       {/* DATE SELECTION */}
-      <View style={styles.dateRow}>
-        {["borrow", "return"].map((type) => (
-          <TouchableOpacity
-            key={type}
-            style={styles.dateBox}
-            onPress={() => {
-              setSelectingType(type);
-              setShowCalendarModal(true);
-            }}
-          >
-            <Ionicons name="calendar-outline" size={20} color="#555" />
-            <Text style={styles.dateText}>
-              {type === "borrow"
-                ? borrowDate || "Borrow Date"
-                : returnDate || "Return Date"}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View style={styles.cpHeader}>
+        <TouchableOpacity
+          style={styles.singleDateBox}
+          onPress={() => setShowCalendarModal(true)}
+        >
+
+          {/* Top row: Icon + Borrow → Return label */}
+          <View style={styles.singleDateHeader}>
+            <Ionicons name="calendar-outline" size={20} color="#1976D2" />
+            <Text style={styles.singleDateLabel}>Borrow → Return</Text>
+          </View>
+
+          {/* Bottom row: actual selected dates */}
+          {borrowDate && returnDate ? (
+            <View style={styles.dateRangeRow}>
+              <Text style={styles.singleDateValue}>{borrowDate}</Text>
+              <Text style={styles.singleDateArrow}>→</Text>
+              <Text style={styles.singleDateValue}>{returnDate}</Text>
+            </View>
+          ) : (
+            <Text style={styles.singleDatePlaceholder}>Select date range</Text>
+          )}
+
+        </TouchableOpacity>
+
       </View>
+
 
       {availableQty !== null && (
         <Text style={styles.availableText}>Available: {availableQty} item(s)</Text>
@@ -620,6 +757,22 @@ return (
             });
             return;
           }
+          // Check availability for entire range
+          const insufficient = checkRangeQty();
+
+          if (insufficient.length > 0) {
+            let msg = "Your requested quantity is not available on:\n\n";
+
+            insufficient.forEach(item => {
+              msg += `${item.date}: Only ${item.available} left\n`;
+            });
+
+            Alert.alert("Insufficient Availability", msg);
+            return;
+          }
+
+        
+
 
           setShowProceedModal(true);
         }}
@@ -652,71 +805,61 @@ return (
           ) : (
             <>
               <Calendar
-                markingType="custom"
+                markingType={"custom"}
                 markedDates={markedDates}
-                onDayPress={async (day) => {
-                const date = day.dateString;
-                const info = calendarMap[date];
-
-                // Block fully reserved dates
-                if (info?.status === "fully_reserved") {
-                  Alert.alert("Unavailable", "That date is fully reserved.");
-                  return;
-                }
-
-                // Update available qty
-                if (info && info.available_qty !== undefined) {
-                  setAvailableQty(info.available_qty);
-                } else {
-                  const data = await fetchAvailability(date);
-                  if (!data) return;
-                  setAvailableQty(data.available_qty || 0);
-                }
-
-                // Set borrow or return date
-                if (selectingType === "borrow") setBorrowDate(date);
-                else if (borrowDate && date < borrowDate)
-                  return Alert.alert("Invalid", "Return date must be after borrow date.");
-                else setReturnDate(date);
-
-                // Reset all previous blue highlights, keep default map colors
-                const newMarks = {};
-
-                Object.entries(calendarMap).forEach(([key, info]) => {
-                  if (info.status === "fully_reserved") {
-                    newMarks[key] = {
-                      ...markedDates[key],
-                      customStyles: {
-                        container: { backgroundColor: "#ffcccc" },
-                        text: { color: "#a00", fontWeight: "bold" },
-                      }
-                    };
-                  } else {
-                    newMarks[key] = {
-                      ...markedDates[key],
-                      customStyles: {
-                        container: { backgroundColor: "#e6ffe6" },
-                        text: { color: "#008000", fontWeight: "600" },
-                      }
-                    };
-                  }
-                });
-
-                // Mark the user-selected date as blue
-                newMarks[date] = {
-                  ...newMarks[date],
-                  customStyles: {
-                    container: { backgroundColor: "#1E88E5" },
-                    text: { color: "#fff", fontWeight: "bold" }
-                  }
-                };
-
-                setMarkedDates(newMarks);
-              }}
-
+                onDayPress={handleDayPress}
                 minDate={new Date().toISOString().slice(0, 10)}
-                theme={{ todayTextColor: "#FFA500", arrowColor: "#1E88E5" }}
+                dayComponent={({ date, marking }) => {
+                  const info = calendarMap[date.dateString];
+                  const isReserved = info?.status === "fully_reserved";
+                  const available = info?.available_qty ?? "";
+
+                  return (
+                    <TouchableOpacity
+                      disabled={isReserved}
+                      onPress={() => handleDayPress({ dateString: date.dateString })}
+                      style={{
+                        width: 40,
+                        height: 48,
+                        borderRadius: marking?.selected ? 20 : 6,
+                        backgroundColor:
+                          marking?.selected
+                            ? "#1E88E5"
+                            : marking?.inRange
+                            ? "#BBDEFB"
+                            : isReserved
+                            ? "#ffcccc"
+                            : "#e6ffe6",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: marking?.selected ? "#fff" : isReserved ? "#a00" : "#000",
+                          fontWeight: marking?.selected ? "700" : "600",
+                          fontSize: 14,
+                        }}
+                      >
+                        {date.day}
+                      </Text>
+
+                      {!marking?.selected && (
+                        <Text
+                          style={{
+                            fontSize: 9,
+                            color: isReserved ? "#a00" : "#000",
+                            marginTop: -2,
+                          }}
+                        >
+                          {available !== "" ? `${available} left` : ""}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  );
+                }}
               />
+
 
               <View style={styles.legendRow}>
                 <View style={styles.legendItem}>
@@ -753,7 +896,14 @@ return (
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.modalBtn, { backgroundColor: "#E53935" }]}
-                  onPress={() => setShowCalendarModal(false)}
+                  onPress={() => {
+                  setBorrowDate(null);
+                  setReturnDate(null);
+                  setBorrowQty("");
+                  setAvailableQty(null);
+                  setMarkedDates({});
+                  setShowCalendarModal(false);
+                }}
                 >
                   <Text style={styles.modalBtnText}>Cancel</Text>
                 </TouchableOpacity>
@@ -1186,6 +1336,71 @@ detailsBigCard: {
   elevation: 6,
 },
 
+singleDateBox: {
+  backgroundColor: "#F8F9FA",       // professional light gray
+  borderRadius: 10,
+  paddingVertical: 12,
+  paddingHorizontal: 14,
+  borderWidth: 1,
+  borderColor: "#E1E5EA",           // soft gray border
+  marginBottom: 12,
+  width: "100%",
+},
+
+singleDateHeader: {
+  flexDirection: "row",
+  alignItems: "center",
+  marginBottom: 4,
+},
+
+
+
+singleDateLabel: {
+  fontSize: 12,
+  color: "#6C757D",       // muted professional text
+  fontWeight: "500",
+  marginLeft: 6,
+},
+
+
+singleDateValue: {
+  fontSize: 16,
+  fontWeight: "600",
+  color: "#212529",       // pure dark gray (NOT black)
+},
+
+
+dateRangeRow: {
+  flexDirection: "row",
+  justifyContent: "space-between",   // more balanced, more professional
+  alignItems: "center",
+  width: "100%",
+  paddingHorizontal: 6,
+  marginTop: 4,
+},
+
+
+
+
+
+
+singleDateHeader: {
+  flexDirection: "row",
+  alignItems: "center",
+  marginBottom: 6,
+},
+
+singleDatePlaceholder: {
+  fontSize: 16,
+  color: "#0f0e0eff",
+  alignItems: "center",
+  fontWeight: "600",
+  marginTop: 4,
+},
+
+
+
+
 /* A SINGLE ROW (main item or added items) */
 itemRow: {
   flexDirection: "row",
@@ -1284,6 +1499,33 @@ removeBtnText: {
   fontWeight: "700",
 },
 
+cpHeader: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  marginBottom: 12,
+  marginTop: 10,
+},
+
+cpBox: {
+  flex: 0.48,
+  backgroundColor: "#fff",
+  borderRadius: 12,
+  paddingVertical: 12,
+  paddingHorizontal: 12,
+  elevation: 3,
+},
+
+cpLabel: {
+  fontSize: 12,
+  color: "#777",
+},
+
+cpValue: {
+  fontSize: 16,
+  fontWeight: "700",
+  color: "#000",
+  marginTop: 2,
+},
 
 
 });
